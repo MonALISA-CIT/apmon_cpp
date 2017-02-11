@@ -1,0 +1,65 @@
+		ApMon - Application Monitoring API for C++
+		******************************************
+VERSION 2.2.8 - Jan 2013
+    * Convert sprintf -> snprintf and fix other minor warnings
+
+VERSION 2.2.7 - Oct 2009
+   * Add minimal Solaris support
+   * Add new CPU usage parameters from 2.6
+
+VERSION 2.2.6 - 28 October 2008
+   * Fixed gcc 4.3.2 warnings.
+
+VERSION 2.2.5 - 22 May 2008
+   * Fixed compiler warning about identical variable names.
+
+VERSION 2.2.3 - 22 November 2007
+   * Fixed bug in calculating the sleeping time for the background thread
+(which sometimes made the thread to be blocked for 10 mins) 
+
+VERSION 2.2.1 - 26 October 2006
+   * Added support for Windows
+
+VERSION 2.2.0 - 7 March 2006
+    * Added new fields in the datagram: an ID for the sender and
+the sequence number of the datagram.
+
+VERSION 2.1.0 - 12 January 2006
+    * Removed the sorting parameters feature.
+    
+VERSION 2.0.10 - 20 December 2005
+    * Added new options for system monitoring: sys_net_sockets, 
+sys_net_tcp_details.
+    * Sorted alphabetically the parameters after their names,
+before putting them in the datagram.
+    * Change the default maximum message rate to 20.
+
+VERSION 2.0.10 - 21 November 2005
+    * Added some system parameters that can be monitored (the number of 
+processes in different states - D, R, S, T, Z).
+    * Made a few modifications for compatibility with MacOS (so that
+ApMon can be initialized even if the proc/ filesystem does not exist). 
+Corrected the error handling when calculating the job disk usage.
+
+VERSION 2.0.6 - 22 August 2005	
+
+    * Fixed a synchronization bug.
+
+VERSION 2.0.6 - 18 August 2005	
+
+    * Fixed some memory leaks and replaced the thread stopping mechanism.
+
+VERSION 2.0.6 - 11 August 2005
+
+    * New feature: the maximum number of messages that can be sent per second is limited.
+
+VERSION 2.0.6 - 8 August 2005
+
+    * Added the "open_files" parameter for job monitoring
+    
+    * Added parameters for general system monitoring: "cpu_family", 
+    "cpu_model", "cpu_model_name", "bogomips"  
+    
+VERSION 2.0.6 - 19 August 2005
+
+    * Fixed some memory leaks.
