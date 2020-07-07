@@ -13,10 +13,10 @@
  * purpose, provided that existing copyright notices are retained in 
  * all copies and that this notice is included verbatim in any distributions
  * or substantial portions of the Software. 
- * This software is a part of the MonALISA framework (http://monalisa.caltech.edu).
+ * This software is a part of the MonALISA framework (http://monalisa.cacr.caltech.edu).
  * Users of the Software are asked to feed back problems, benefits,
  * and/or suggestions about the software to the MonALISA Development Team
- * (MonALISA-CIT@cern.ch). Support for this software - fixing of bugs,
+ * (developers@monalisa.cern.ch). Support for this software - fixing of bugs,
  * incorporation of new features - is done on a best effort basis. All bug
  * fixes and enhancements will be made available under the same terms and
  * conditions as the original software,
@@ -64,7 +64,7 @@ namespace apmon_utils {
    * @param lastModified The "Last-Modified" header that was received last time
    * the page was requested.
    */
-  bool urlModified(char *url, char *lastModified) throw(runtime_error);
+  bool urlModified(char *url, char *lastModified);
 
  /**
   * Performs a HTTP request and puts the result into a temporary file.
@@ -73,14 +73,13 @@ namespace apmon_utils {
   * @param temp_filename The name of the temporary file.
   * @return The size of the response received from the server, in bytes.
   */
-  int httpRequest(char *url, const char *reqType, char *temp_filename) 
-    throw(runtime_error);
+  int httpRequest(char *url, const char *reqType, char *temp_filename);
 
  /**
   * If "address" is a hostname, it returns the corresponding IP address;
   * if "address" is an IP address, it just returns a copy of the address.
   */
-  char *findIP(char *address) throw(runtime_error);
+  char *findIP(char *address);
 
 
  /**
@@ -91,8 +90,7 @@ namespace apmon_utils {
   * @param port The determined port (also an output parameter).
   * @param identifier The determined file name (also an output parameter).
   */
-  void parse_URL(char *url, char *hostname, int *port, char *identifier)
-    throw(runtime_error);
+  void parse_URL(char *url, char *hostname, int *port, char *identifier);
 
  /**
   * Frees the memory for a 2-dimensional character array.

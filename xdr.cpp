@@ -40,9 +40,6 @@
  * Mountain View, California  94043
  */
 
-/** This is only for WINDOWS. Linux and Mac already have this in <rpc/rpc.h> */
-#ifdef WIN32
-
 #if !defined(lint) && defined(SCCSIDS)
 static char sccsid[] = "@(#)xdr.c 1.35 87/08/12";
 #endif
@@ -61,7 +58,12 @@ static char sccsid[] = "@(#)xdr.c 1.35 87/08/12";
 #include <stdlib.h>             /* malloc,free */
 #include <string.h>             /* strlen() */
 
+#ifdef WIN32
 #include <Winsock2.h>
+#else
+#include <netinet/in.h>
+#endif
+
 #include "xdr.h"
 
 /*
@@ -110,10 +112,10 @@ xdr_int(XDR *xdrs, int *ip)
 
 #ifdef lint
         (void) (xdr_short(xdrs, (short *)ip));
-        return (xdr_long(xdrs, (long *)ip));
+        return (xdr_long(xdrs, (uint32_t *)ip));
 #else
         if (sizeof (int) == sizeof (long)) {
-                return (xdr_long(xdrs, (long *)ip));
+                return (xdr_long(xdrs, (uint32_t *)ip));
         } else {
                 return (xdr_short(xdrs, (short *)ip));
         }
@@ -125,8 +127,9 @@ xdr_int(XDR *xdrs, int *ip)
  * same as xdr_u_long - open coded to save a proc call!
  */
 bool_t
-xdr_long(register XDR *xdrs, long *lp)
+xdr_long(XDR *xdrs, uint32_t *lp)
 {
+	printf("long\n");
 
         if (xdrs->x_op == XDR_ENCODE)
                 return (XDR_PUTLONG(xdrs, lp));
@@ -145,13 +148,13 @@ xdr_long(register XDR *xdrs, long *lp)
  * same as xdr_long - open coded to save a proc call!
  */
 bool_t
-xdr_u_long(register XDR *xdrs, u_long *ulp)
+xdr_u_long(XDR *xdrs, uint32_t *ulp)
 {
 
         if (xdrs->x_op == XDR_DECODE)
-                return (XDR_GETLONG(xdrs, (long *)ulp));
+                return (XDR_GETLONG(xdrs, (uint32_t *)ulp));
         if (xdrs->x_op == XDR_ENCODE)
-                return (XDR_PUTLONG(xdrs, (long *)ulp));
+                return (XDR_PUTLONG(xdrs, (uint32_t *)ulp));
         if (xdrs->x_op == XDR_FREE)
                 return (TRUE);
         return (FALSE);
@@ -161,14 +164,14 @@ xdr_u_long(register XDR *xdrs, u_long *ulp)
  * XDR short integers
  */
 bool_t
-xdr_short(register XDR *xdrs, short *sp)
+xdr_short(XDR *xdrs, short *sp)
 {
-        long l;
+        uint32_t l;
 
         switch (xdrs->x_op) {
 
         case XDR_ENCODE:
-                l = (long) *sp;
+                l = (uint32_t) *sp;
                 return (XDR_PUTLONG(xdrs, &l));
 
         case XDR_DECODE:
@@ -188,14 +191,14 @@ xdr_short(register XDR *xdrs, short *sp)
  * XDR unsigned short integers
  */
 bool_t
-xdr_u_short(register XDR *xdrs, u_short *usp)
+xdr_u_short(XDR *xdrs, u_short *usp)
 {
-        long l;
+        uint32_t l;
 
         switch (xdrs->x_op) {
 
         case XDR_ENCODE:
-                l = (long) *usp;
+                l = (uint32_t) *usp;
                 return (XDR_PUTLONG(xdrs, &l));
 
         case XDR_DECODE:
@@ -220,10 +223,10 @@ xdr_u_int(XDR *xdrs, u_int *up)
 
 #ifdef lint
         (void) (xdr_short(xdrs, (short *)up));
-        return (xdr_u_long(xdrs, (u_long *)up));
+        return (xdr_u_long(xdrs, (uint32_t *)up));
 #else
         if (sizeof (u_int) == sizeof (u_long)) {
-                return (xdr_u_long(xdrs, (u_long *)up));
+                return (xdr_u_long(xdrs, (uint32_t *)up));
         } else {
                 return (xdr_short(xdrs, (short *)up));
         }
@@ -236,10 +239,10 @@ xdr_u_int(XDR *xdrs, u_int *up)
  * cp points to the opaque object and cnt gives the byte length.
  */
 bool_t
-xdr_opaque(register XDR *xdrs, caddr_t cp, register u_int cnt)
+xdr_opaque(XDR *xdrs, caddr_t cp, u_int cnt)
 {
-        register u_int rndup;
-        static crud[BYTES_PER_XDR_UNIT];
+        u_int rndup;
+        static char* crud[BYTES_PER_XDR_UNIT];
 
         /*
          * if no data we are done
@@ -288,9 +291,9 @@ xdr_opaque(register XDR *xdrs, caddr_t cp, register u_int cnt)
  * of the string as specified by a protocol.
  */
 bool_t
-xdr_string(register XDR *xdrs, char **cpp, u_int maxsize)
+xdr_string(XDR *xdrs, char **cpp, u_int maxsize)
 {
-        register char *sp = *cpp;  /* sp is the actual string pointer */
+        char *sp = *cpp;  /* sp is the actual string pointer */
         u_int size;
         u_int nodesize;
 
@@ -345,13 +348,13 @@ xdr_string(register XDR *xdrs, char **cpp, u_int maxsize)
 }
 
 bool_t
-xdr_float(register XDR *xdrs, register float *fp)
+xdr_float(XDR *xdrs, float *fp)
 {
         switch (xdrs->x_op) {
         case XDR_ENCODE:
-                return (XDR_PUTLONG(xdrs, (long *)fp));
+                return (XDR_PUTLONG(xdrs, (uint32_t *)fp));
         case XDR_DECODE:
-                return (XDR_GETLONG(xdrs, (long *)fp));
+                return (XDR_GETLONG(xdrs, (uint32_t *)fp));
         case XDR_FREE:
                 return (TRUE);
         }
@@ -359,16 +362,16 @@ xdr_float(register XDR *xdrs, register float *fp)
 }
 
 bool_t
-xdr_double(register XDR *xdrs, double *dp)
+xdr_double(XDR *xdrs, double *dp)
 {
-        register long *lp;
+        uint32_t *lp;
 
         switch (xdrs->x_op) {
         case XDR_ENCODE:
-                lp = (long *)dp;
+                lp = (uint32_t *)dp;
                 return (XDR_PUTLONG(xdrs, lp+1) && XDR_PUTLONG(xdrs, lp));
         case XDR_DECODE:
-                lp = (long *)dp;
+                lp = (uint32_t *)dp;
                 return (XDR_GETLONG(xdrs, lp+1) && XDR_GETLONG(xdrs, lp));
         case XDR_FREE:
                 return (TRUE);
@@ -380,10 +383,10 @@ xdr_double(register XDR *xdrs, double *dp)
 /************************* XDR operations with memory buffers **************************/
 
 void xdrmem_destroy(void *);
-bool_t xdrmem_getlong(void *xdrs, long *lp);
-bool_t xdrmem_putlong(void *xdrs, long *lp);
-bool_t xdrmem_getbytes(void *xdrs, void *addr, register int len);
-bool_t xdrmem_putbytes(void *xdrs, void *addr, register int len);
+bool_t xdrmem_getlong(void *xdrs, uint32_t *lp);
+bool_t xdrmem_putlong(void *xdrs, uint32_t *lp);
+bool_t xdrmem_getbytes(void *xdrs, void *addr, int len);
+bool_t xdrmem_putbytes(void *xdrs, void *addr, int len);
 u_int  xdrmem_getpos(void *xdrs);
 bool_t xdrmem_setpos(void *xdrs, int pos);
 long * xdrmem_inline(void *xdrs, int len);
@@ -404,7 +407,7 @@ static XDR::xdr_ops xdrmem_ops = {
  * memory buffer.
  */
 void
-xdrmem_create(register XDR *xdrs, caddr_t addr, u_int size, enum xdr_op op)
+xdrmem_create(XDR *xdrs, caddr_t addr, u_int size, enum xdr_op op)
 {
 
         xdrs->x_op = op;
@@ -413,38 +416,36 @@ xdrmem_create(register XDR *xdrs, caddr_t addr, u_int size, enum xdr_op op)
         xdrs->x_handy = size;
 }
 
-static void
+void
 xdrmem_destroy(void *xdrs)
 {
 }
 
-static bool_t
-xdrmem_getlong(void *xdrsv, long *lp)
+bool_t
+xdrmem_getlong(void *xdrsv, uint32_t *lp)
 {
-		register XDR *xdrs = (XDR *)xdrsv;
-        if ((xdrs->x_handy -= sizeof(long)) < 0)
+	XDR *xdrs = (XDR *)xdrsv;
+        if ((xdrs->x_handy -= sizeof(uint32_t)) < 0)
                 return (FALSE);
         *lp = (long)ntohl((u_long)(*((long *)(xdrs->x_private))));
-        xdrs->x_private += sizeof(long);
+        xdrs->x_private += sizeof(uint32_t);
         return (TRUE);
 }
 
-static bool_t
-xdrmem_putlong(void *xdrsv, long *lp)
+bool_t
+xdrmem_putlong(void *xdrsv, uint32_t *lp)
 {
+	XDR *xdrs = (XDR *)xdrsv;
 
-		register XDR *xdrs = (XDR *)xdrsv;
-        if ((xdrs->x_handy -= sizeof(long)) < 0)
-                return (FALSE);
-        *(long *)xdrs->x_private = (long)htonl((u_long)(*lp));
-        xdrs->x_private += sizeof(long);
-        return (TRUE);
+	uint32_t value = htonl((uint32_t) (*lp));
+
+	return xdrmem_putbytes(xdrsv, &value, sizeof(uint32_t));
 }
 
-static bool_t
-xdrmem_getbytes(void *xdrsv, void *addr, register int len)
+bool_t
+xdrmem_getbytes(void *xdrsv, void *addr, int len)
 {
-		register XDR *xdrs = (XDR *)xdrsv;
+	XDR *xdrs = (XDR *)xdrsv;
         if ((xdrs->x_handy -= len) < 0)
                 return (FALSE);
         memcpy(addr, xdrs->x_private, len);
@@ -452,10 +453,10 @@ xdrmem_getbytes(void *xdrsv, void *addr, register int len)
         return (TRUE);
 }
 
-static bool_t
-xdrmem_putbytes(void *xdrsv, void *addr, register int len)
+bool_t
+xdrmem_putbytes(void *xdrsv, void *addr, int len)
 {
-		register XDR *xdrs = (XDR *)xdrsv;
+	XDR *xdrs = (XDR *)xdrsv;
         if ((xdrs->x_handy -= len) < 0)
                 return (FALSE);
         memcpy(xdrs->x_private, addr, len);
@@ -463,32 +464,32 @@ xdrmem_putbytes(void *xdrsv, void *addr, register int len)
         return (TRUE);
 }
 
-static u_int
+u_int
 xdrmem_getpos(void *xdrsv)
 {
-		register XDR *xdrs = (XDR *)xdrsv;
-        return ((u_int)xdrs->x_private - (u_int)xdrs->x_base);
+	XDR *xdrs = (XDR *)xdrsv;
+        return (u_int) ((u_long)xdrs->x_private - (u_long)xdrs->x_base);
 }
 
-static bool_t
+bool_t
 xdrmem_setpos(void *xdrsv, int pos)
 {
-		register XDR *xdrs = (XDR *)xdrsv;
-        register caddr_t newaddr = xdrs->x_base + pos;
-        register caddr_t lastaddr = xdrs->x_private + xdrs->x_handy;
+	XDR *xdrs = (XDR *)xdrsv;
+        caddr_t newaddr = xdrs->x_base + pos;
+        caddr_t lastaddr = xdrs->x_private + xdrs->x_handy;
 
         if ((long)newaddr > (long)lastaddr)
                 return (FALSE);
         xdrs->x_private = newaddr;
-        xdrs->x_handy = (int)lastaddr - (int)newaddr;
+        xdrs->x_handy = (int) (lastaddr - newaddr);
         return (TRUE);
 }
 
-static long *
+long *
 xdrmem_inline(void *xdrsv, int len)
 {
         long *buf = 0;
-		register XDR *xdrs = (XDR *)xdrsv;
+	XDR *xdrs = (XDR *)xdrsv;
         if (xdrs->x_handy >= len) {
                 xdrs->x_handy -= len;
                 buf = (long *) xdrs->x_private;
@@ -496,5 +497,3 @@ xdrmem_inline(void *xdrsv, int len)
         }
         return (buf);
 }
-
-#endif  /* WIN32 */

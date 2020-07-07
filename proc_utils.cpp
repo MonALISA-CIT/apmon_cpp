@@ -14,10 +14,10 @@
  * purpose, provided that existing copyright notices are retained in 
  * all copies and that this notice is included verbatim in any distributions
  * or substantial portions of the Software. 
- * This software is a part of the MonALISA framework (http://monalisa.caltech.edu).
+ * This software is a part of the MonALISA framework (http://monalisa.cacr.caltech.edu).
  * Users of the Software are asked to feed back problems, benefits,
  * and/or suggestions about the software to the MonALISA Development Team
- * (MonALISA-CIT@cern.ch). Support for this software - fixing of bugs,
+ * (developers@monalisa.cern.ch). Support for this software - fixing of bugs,
  * incorporation of new features - is done on a best effort basis. All bug
  * fixes and enhancements will be made available under the same terms and
  * conditions as the original software,
@@ -52,8 +52,7 @@ void ProcUtils::getCPUUsage(ApMon& apm, double& cpuUsage,
 			       double& cpuIOWait, double& cpuIRQ,
 			       double& cpuSoftIRQ, double& cpuSteal,
 			       double& cpuGuest,
-			       int numCPUs)
-  throw (runtime_error, procutils_error) {
+			       int numCPUs){
 
 #ifndef WIN32
   FILE *fp1;
@@ -102,16 +101,16 @@ void ProcUtils::getCPUUsage(ApMon& apm, double& cpuUsage,
 #else
   fp1 = fopen("/proc/stat", "r");
   if (fp1 == NULL)
-    throw procutils_error("[ getCPUUsage() ] Could not open /proc/stat");
+    return;
 
   while (fgets(line, MAX_STRING_LEN, fp1)) {
       if (strstr(line, "cpu") == line)
 	break;
   }
   
-  if (line == NULL) {
+  if (line == 0) {
     fclose(fp1);
-    throw procutils_error("[ getCPUUsage() ] Could not obtain CPU usage info from /proc/stat");
+    return;
   }
 
   sscanf(line, "%s %lf %lf %lf %lf %lf %lf %lf %lf %lf", s1, &usrTime, &niceTime, &sysTime, &idleTime, &iowaitTime, &irqTime, &softirqTime, &stealTime, &guestTime);
@@ -142,15 +141,15 @@ void ProcUtils::getCPUUsage(ApMon& apm, double& cpuUsage,
     apm.lastSysVals[indGUEST] = guestTime;
 #endif
 
-    throw runtime_error("[ getCPUUsage() ] CPU usage counter reset");
+    return;
   }
 
   if (numCPUs == 0)
-    throw procutils_error("[ getCPUUsage() ] Number of CPUs was not initialized");
+    return;
 
   //printf("### crtTime %ld lastSysInfo %ld\n", crtTime, apm.lastSysInfoSend);  
   if (crtTime <= apm.lastSysInfoSend)
-    throw runtime_error("[ getCPUUsage() ] Current time <= time of the previous sysInfoSend");
+    return;
   
   totalTime = (usrTime - apm.lastSysVals[indU]) + 
     (sysTime -apm.lastSysVals[indS]) +
@@ -199,8 +198,7 @@ void ProcUtils::getCPUUsage(ApMon& apm, double& cpuUsage,
 
 void ProcUtils::getSwapPages(ApMon& apm, double& pagesIn, 
 			       double& pagesOut, double& swapIn, 
-			     double& swapOut) 
-  throw (runtime_error, procutils_error) {
+			     double& swapOut) {
 #ifndef WIN32
   FILE *fp1;
   char line[MAX_STRING_LEN];
@@ -225,7 +223,7 @@ void ProcUtils::getSwapPages(ApMon& apm, double& pagesIn,
 	fp1 = popen("vmstat -s", "r");
 	
 	if (fp1==NULL){
-	    throw procutils_error("Cannot run vmstat -s");
+	    return;
 	}
 
 	while (fgets(line, MAX_STRING_LEN, fp1)){
@@ -276,9 +274,10 @@ void ProcUtils::getSwapPages(ApMon& apm, double& pagesIn,
 #else
   fp1 = fopen("/proc/stat", "r");
   if (fp1 == NULL)
-    throw procutils_error("[ getSwapPages() ] Could not open /proc/stat");
+    return;
+
   if (crtTime <= apm.lastSysInfoSend)
-    throw runtime_error("[ getSwapPages() ] Current time <= time of the previous sysInfoSend");
+    return;
 
   while (fgets(line, MAX_STRING_LEN, fp1)) {
     if (strstr(line, "page") == line) {
@@ -290,7 +289,7 @@ void ProcUtils::getSwapPages(ApMon& apm, double& pagesIn,
       if (p_in < apm.lastSysVals[ind1] || p_out < apm.lastSysVals[ind2]) {
 	apm.lastSysVals[ind1] = p_in;
 	apm.lastSysVals[ind2] = p_out;
-	throw runtime_error("[ getSwapPages() ] Pages in/out counter reset");
+	return;
       }
       pagesIn = (p_in - apm.lastSysVals[ind1]) / (crtTime - apm.lastSysInfoSend);
       pagesOut = (p_out - apm.lastSysVals[ind2]) / (crtTime - apm.lastSysInfoSend);
@@ -308,7 +307,7 @@ void ProcUtils::getSwapPages(ApMon& apm, double& pagesIn,
       if (s_in < apm.lastSysVals[ind1] || s_out < apm.lastSysVals[ind2]) {
 	apm.lastSysVals[ind1] = s_in;
 	apm.lastSysVals[ind2] = s_out;
-	throw runtime_error("[ getSwapPages() ] Swap in/out counter reset");
+	return;
       }
       swapIn = (s_in - apm.lastSysVals[ind1]) / (crtTime - apm.lastSysInfoSend);
       swapOut = (s_out - apm.lastSysVals[ind2]) / (crtTime - apm.lastSysInfoSend);
@@ -323,14 +322,13 @@ void ProcUtils::getSwapPages(ApMon& apm, double& pagesIn,
 #endif
 
   if (!foundPages || !foundSwap) {
-    throw procutils_error("[ getSwapPages() ] Could not obtain swap/pages in/out from /proc/stat (or vmstat -s on SunOS)");
+    return;
   }
 #endif
 }
 
 void ProcUtils::getLoad(double &load1, double &load5, 
-	   double &load15, double &processes) 
-  throw(procutils_error) {
+	   double &load15, double &processes) {
 #ifndef WIN32
   double v1, v5, v15, activeProcs, totalProcs;
   FILE *fp1;
@@ -359,12 +357,12 @@ void ProcUtils::getLoad(double &load1, double &load5,
 #else
   fp1 = fopen("/proc/loadavg", "r");
   if (fp1 == NULL)
-    throw procutils_error("[ getLoad() ] Could not open /proc/loadavg");
+    return;
 
   int retScan = fscanf(fp1, "%lf %lf %lf", &v1, &v5, &v15);
   if (retScan != 3) {
     fclose(fp1);
-    throw procutils_error("[ getLoad() ] Could not read 3 load values from /proc/loadavg");
+    return;
   }
 
   load1 = v1;
@@ -374,7 +372,7 @@ void ProcUtils::getLoad(double &load1, double &load5,
   retScan = fscanf(fp1, "%lf/%lf", &activeProcs, &totalProcs);
   if (retScan != 2) {
     fclose(fp1);
-    throw procutils_error("[ getLoad() ] Could not read number of active/total processes from /proc/loadavg");
+    return;
   }    
 
   processes = totalProcs;
@@ -385,8 +383,7 @@ void ProcUtils::getLoad(double &load1, double &load5,
 #endif
 }
 
-void ProcUtils::getProcesses(double& processes, double states[]) 
-  throw(runtime_error) {
+void ProcUtils::getProcesses(double& processes, double states[]) {
 #if defined(WIN32) || defined(__SUNOS)
   processes = RET_ERROR;
 
@@ -405,7 +402,7 @@ void ProcUtils::getProcesses(double& processes, double states[])
 
  switch (cpid = fork()) {
   case -1:
-    throw runtime_error("[ getProcesses() ] Unable to fork()");
+    return;
   case 0:
     argv[0] = (char *)"/bin/sh"; argv[1] = (char *)"-c";
     snprintf(buf, 99, "ps -A -o state > %s", psstat_f);
@@ -416,7 +413,7 @@ void ProcUtils::getProcesses(double& processes, double states[])
   default:
     if (waitpid(cpid, &status, 0) == -1) {
       snprintf(buf, 99, "[ getProcesses() ] The number of processes could not be determined");
-      throw runtime_error(buf); 
+      return;
     }
   }
 
@@ -424,7 +421,7 @@ void ProcUtils::getProcesses(double& processes, double states[])
   if (pf == NULL) {
     unlink(psstat_f);
     snprintf(buf, 99, "[ getProcesses() ] The number of processes could not be determined");
-    throw runtime_error(buf);
+    return;
   } 
 
   processes = 0;
@@ -432,7 +429,7 @@ void ProcUtils::getProcesses(double& processes, double states[])
   // indexing
   for (int i = 0; i < NLETTERS; i++)
     states[i] = 0.0;
-  while (fgets(buf, 10, pf) > 0) {
+  while (fgets(buf, 10, pf) != 0) {
     ch = buf[0];
     states[ch - 65]++;
     processes++;
@@ -443,8 +440,7 @@ void ProcUtils::getProcesses(double& processes, double states[])
 #endif
 }
 
-void ProcUtils::getSysMem(double &totalMem, double &totalSwap) 
-  throw(procutils_error) {
+void ProcUtils::getSysMem(double &totalMem, double &totalSwap) {
 #ifndef WIN32
 
 char s1[20], line[MAX_STRING_LEN];
@@ -502,7 +498,7 @@ FILE *fp1;
 #else
   fp1 = fopen("/proc/meminfo", "r");
   if (fp1 == NULL)
-    throw procutils_error("[ getSysMem() ] Could not open /proc/meminfo");
+    return;
 
   while (fgets(line, MAX_STRING_LEN, fp1)) {
     if (strstr(line, "MemTotal:") == line) {
@@ -523,7 +519,8 @@ FILE *fp1;
 #endif
 
   if (!memFound || !swapFound)
-    throw procutils_error("[ getSysMem() ] Could not obtain memory info from /proc/meminfo");
+    return;
+
   totalMem = valMem;
   totalSwap = valSwap;
 
@@ -531,8 +528,7 @@ FILE *fp1;
 }
 
 void ProcUtils::getMemUsed(double &usedMem, double& freeMem, 
-				  double &usedSwap, double& freeSwap) 
-  throw(procutils_error) {
+				  double &usedSwap, double& freeSwap) {
 #ifndef WIN32
 
   double mFree = 0, mTotal = 0, sFree = 0, sTotal = 0;
@@ -553,7 +549,7 @@ void ProcUtils::getMemUsed(double &usedMem, double& freeMem,
   else{
 	usedMem = freeMem = usedSwap = freeSwap = -1;
 	pclose(fp1);
-	throw procutils_error("[ getMemUsed() ] Cannot read memory info from vmstat");
+	return;
   }
 
   char tempbuf[MAX_STRING_LEN];
@@ -616,7 +612,7 @@ void ProcUtils::getMemUsed(double &usedMem, double& freeMem,
 
   fp1 = fopen("/proc/meminfo", "r");
   if (fp1 == NULL)
-    throw procutils_error("[ getMemUsed() ] Could not open /proc/meminfo");
+    return;
 
   while (fgets(line, MAX_STRING_LEN, fp1)) {
     if (strstr(line, "MemTotal:") == line) {
@@ -649,7 +645,7 @@ void ProcUtils::getMemUsed(double &usedMem, double& freeMem,
 #endif
 
   if (!mFreeFound || !mTotalFound || !sFreeFound || !sTotalFound)
-    throw procutils_error("[ getMemUsed() ] Could not obtain memory info from /proc/meminfo");
+    return;
 
   if (mFree > mTotal)
     mTotal = mFree;
@@ -665,8 +661,7 @@ void ProcUtils::getMemUsed(double &usedMem, double& freeMem,
 #endif
 }
 
-void ProcUtils::getNetworkInterfaces(int &nInterfaces, 
-		      char names[][20]) throw(procutils_error) {
+void ProcUtils::getNetworkInterfaces(int &nInterfaces, char names[][20]) {
 
 nInterfaces = 0;
 
@@ -722,7 +717,8 @@ nInterfaces = 0;
 
   fp1 = fopen("/proc/net/dev", "r");
   if (fp1 == NULL)
-    throw procutils_error("[ getMemUsed() ] Could not open /proc/net/dev");
+    return;
+
   while (fgets(line, MAX_STRING_LEN, fp1) && nInterfaces<100) {
     if (strchr(line, ':') == NULL)
       continue;
@@ -743,8 +739,7 @@ nInterfaces = 0;
 }
 
 void ProcUtils::getNetInfo(ApMon& apm, double **vNetIn, 
-				  double **vNetOut, double **vNetErrs) 
-  throw(runtime_error, procutils_error) {
+				  double **vNetOut, double **vNetErrs) {
 #ifndef WIN32
   double *netIn, *netOut, *netErrs, bytesReceived = 0, bytesSent = 0;
   int errs = 0;
@@ -767,7 +762,7 @@ void ProcUtils::getNetInfo(ApMon& apm, double **vNetIn,
   }
 
   if (crtTime <= apm.lastSysInfoSend)
-    throw runtime_error("[ getNetInfo() ] Current time <= time of the previous sysInfoSend");
+    return;
 
   netIn = (double *)malloc(apm.nInterfaces * sizeof(double));
   netOut = (double *)malloc(apm.nInterfaces * sizeof(double));
@@ -823,7 +818,7 @@ void ProcUtils::getNetInfo(ApMon& apm, double **vNetIn,
 #else
   fp1 = fopen("/proc/net/dev", "r");
   if (fp1 == NULL)
-    throw procutils_error("[ getNetInfo() ] Could not open /proc/net/dev");
+    return;
 
   while (fgets(line, MAX_STRING_LEN, fp1)) {
     if (strchr(line, ':') == NULL)
@@ -846,7 +841,7 @@ void ProcUtils::getNetInfo(ApMon& apm, double **vNetIn,
       fclose(fp1);
       free(netIn); free(netOut); free(netErrs);
       snprintf(msg, MAX_STRING_LEN-1, "[ getNetInfo() ] Could not find interface %s in /proc/net/dev", tmp);  
-      throw runtime_error(msg);
+      return;
     }
 
     /* parse the rest of the line */
@@ -875,7 +870,7 @@ void ProcUtils::getNetInfo(ApMon& apm, double **vNetIn,
       apm.lastNetErrs[ind] = errs;
       fclose(fp1);
       free(netIn); free(netOut); free(netErrs);
-      throw runtime_error("[ getNetInfo() ] Network interface(s) restarted.");
+      return;
     }
 
     if (apm.lastSysInfoSend == 0) {
@@ -910,7 +905,7 @@ void ProcUtils::getNetInfo(ApMon& apm, double **vNetIn,
 #endif
  }
 
-int ProcUtils::getNumCPUs() throw(procutils_error) {
+int ProcUtils::getNumCPUs() {
 #ifdef WIN32
 	return 0;
 #else
@@ -931,7 +926,7 @@ int ProcUtils::getNumCPUs() throw(procutils_error) {
   fp = fopen("/proc/stat", "r");
 
   if (fp == NULL)
-    throw procutils_error("[ getNumCPUs() ] Could not open /proc/stat.");
+    return -1;
 
   while(fgets(line, MAX_STRING_LEN, fp)) {
     if (strstr(line, "cpu") == line && isdigit(line[3]))
@@ -946,7 +941,7 @@ int ProcUtils::getNumCPUs() throw(procutils_error) {
 #endif
 }
 
-void ProcUtils::getCPUInfo(ApMon& apm) throw(procutils_error) {
+void ProcUtils::getCPUInfo(ApMon& apm) {
 #ifndef WIN32
 #ifndef __SUNOS
   double freq = 0;
@@ -958,7 +953,7 @@ void ProcUtils::getCPUInfo(ApMon& apm) throw(procutils_error) {
 
   FILE *fp = fopen("/proc/cpuinfo", "r");
   if (fp == NULL)
-    throw procutils_error("[ getCPUInfo() ] Could not open /proc/cpuinfo");
+    return;
 
   while (fgets(line, MAX_STRING_LEN, fp)) {
     if (strstr(line, "cpu MHz") == line) {
@@ -1015,7 +1010,7 @@ void ProcUtils::getCPUInfo(ApMon& apm) throw(procutils_error) {
 
   fclose(fp);
   if (!freqFound || !bogomipsFound)
-    throw procutils_error("[ getCPUInfo() ] Could not find frequency or bogomips in /proc/cpuinfo");
+    return;
 #endif
 #endif
 }
@@ -1023,7 +1018,7 @@ void ProcUtils::getCPUInfo(ApMon& apm) throw(procutils_error) {
 /**
  * Returns the system boot time in milliseconds since the Epoch.
  */
-long ProcUtils::getBootTime() throw (procutils_error) {
+long ProcUtils::getBootTime() {
 #if defined(WIN32) || defined(__SUNOS)
 	return 0;
 #else
@@ -1031,7 +1026,7 @@ long ProcUtils::getBootTime() throw (procutils_error) {
   long btime = 0;
   FILE *fp = fopen("/proc/stat", "rt");
   if (fp == NULL)
-    throw procutils_error("[ getBootTime() ] Could not open /proc/stat");
+    return 0;
 
   while (fgets(line, MAX_STRING_LEN, fp)) {
     if (strstr(line, "btime") == line) {
@@ -1040,14 +1035,13 @@ long ProcUtils::getBootTime() throw (procutils_error) {
     }
   }  
   fclose(fp);
-  if (btime == 0)
-    throw procutils_error("[ getBootTime() ] Could not find boot time in /proc/stat");
+
   return btime;
 #endif
 }
 
 
-double ProcUtils::getUpTime() throw(procutils_error) {
+double ProcUtils::getUpTime() {
 #ifdef WIN32
 	return 0;
 #else
@@ -1061,26 +1055,26 @@ double ProcUtils::getUpTime() throw(procutils_error) {
 #else
   FILE *fp = fopen("/proc/uptime", "rt");
   if (fp == NULL) {
-    throw procutils_error("[ getUpTime() ] Could not open /proc/uptime");
+    return -1;
   }
 
   int retScan = fscanf(fp, "%lf", &uptime);
   
   if (retScan != 1) {
-    throw procutils_error("[ getUpTime() ] Could not read uptime value from /proc/uptime");
+    return -1;
   }
 
   fclose(fp);
 #endif
   if (uptime <= 0) {
-    throw procutils_error("[ getUpTime() ] Could not find uptime in /proc/uptime or by system call on Solaris");
+    return -1;
   }
 
   return uptime / (24 * 3600);
 #endif
 }
 
-int ProcUtils::countOpenFiles(long pid) throw(procutils_error) {
+int ProcUtils::countOpenFiles(long pid) {
 #if defined(WIN32) || defined(__SUNOS)
 	return 0;
 #else
@@ -1095,7 +1089,7 @@ int ProcUtils::countOpenFiles(long pid) throw(procutils_error) {
   dir = opendir(dirname);
   if (dir == NULL) {
     snprintf(msg, MAX_STRING_LEN-1, "[ countOpenFiles() ] Could not open %s", dirname); 
-    throw procutils_error(msg);
+    return -1;
   }
 
   /* count the files from /proc/<pid>/fd/ */
@@ -1118,8 +1112,7 @@ int ProcUtils::countOpenFiles(long pid) throw(procutils_error) {
 }
 
 void ProcUtils::getNetstatInfo(ApMon& apm, double nsockets[], 
-				      double tcp_states[]) 
-  throw(runtime_error) {
+				      double tcp_states[]) {
 
   // the states table keeps an entry for each alphabet letter, for efficient 
   // indexing
@@ -1143,7 +1136,7 @@ void ProcUtils::getNetstatInfo(ApMon& apm, double nsockets[],
 
   switch (cpid = fork()) {
   case -1:
-    throw runtime_error("[ getNetstatInfo() ] Unable to fork()");
+    return;
   case 0:
     argv[0] = (char *)"/bin/sh"; argv[1] = (char *)"-c";
     snprintf(buf, 199, "netstat -an > %s", netstat_f);
@@ -1154,7 +1147,7 @@ void ProcUtils::getNetstatInfo(ApMon& apm, double nsockets[],
   default:
     if (waitpid(cpid, &status, 0) == -1) {
       snprintf(msg, 99, "[ getNetstatInfo() ] The netstat information could not be collected");
-      throw runtime_error(msg); 
+      return;
     }
   }
 
@@ -1162,7 +1155,7 @@ void ProcUtils::getNetstatInfo(ApMon& apm, double nsockets[],
   if (pf == NULL) {
     unlink(netstat_f);
     snprintf(msg, 99, "[ getNetstatInfo() ] The netstat information could not be collected");
-    throw runtime_error(msg);
+    return;
   } 
 
 #ifdef __SUNOS
@@ -1242,7 +1235,7 @@ void ProcUtils::getNetstatInfo(ApMon& apm, double nsockets[],
   
   nsockets[SOCK_ICM] = RET_ERROR;
 #else
-  while (fgets(buf, 200, pf) > 0) {
+  while (fgets(buf, 200, pf) != 0) {
     tmp = strtok_r(buf, " \t\n", &pbuf);
     if (strstr(tmp, "tcp") == tmp) {
       nsockets[SOCK_TCP]++;

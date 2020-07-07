@@ -13,10 +13,10 @@
  * purpose, provided that existing copyright notices are retained in 
  * all copies and that this notice is included verbatim in any distributions
  * or substantial portions of the Software. 
- * This software is a part of the MonALISA framework (http://monalisa.caltech.edu).
+ * This software is a part of the MonALISA framework (http://monalisa.cacr.caltech.edu).
  * Users of the Software are asked to feed back problems, benefits,
  * and/or suggestions about the software to the MonALISA Development Team
- * (MonALISA-CIT@cern.ch). Support for this software - fixing of bugs,
+ * (developers@monalisa.cern.ch). Support for this software - fixing of bugs,
  * incorporation of new features - is done on a best effort basis. All bug
  * fixes and enhancements will be made available under the same terms and
  * conditions as the original software,
@@ -37,7 +37,7 @@
 #include "ApMon.h"
 #include "utils.h"
 
-bool apmon_utils::urlModified(char *url, char *lastModified) throw(runtime_error) {
+bool apmon_utils::urlModified(char *url, char *lastModified) {
   char temp_filename[300]; 
   FILE *tmp_file;
   bool lineFound;
@@ -66,20 +66,20 @@ bool apmon_utils::urlModified(char *url, char *lastModified) throw(runtime_error
    /* read the header from the temporary file */
   tmp_file = fopen(temp_filename, "rt");
   if (tmp_file == NULL)
-    throw runtime_error("[ urlModified() ] Error getting the configuration web page");
+    return false;
 
   //line = (char*)malloc(MAX_STRING_LEN * sizeof(char));
 
   //check if we got the page correctly
   char *retGet = fgets(line, MAX_STRING_LEN, tmp_file);
   if (retGet == NULL)
-    throw runtime_error("[ urlModified() ] Error getting the configuration web page");
-    
+    return false;
+
   sscanf(line, "%s %s", str1, str2);
   if (atoi(str2) != 200) {
     fclose(tmp_file);
     unlink(temp_filename);
-    throw runtime_error("[ urlModified() ] Error getting the configuration web page");
+    return false;
   }
 
   // look for the "Last-Modified" line
@@ -105,15 +105,14 @@ bool apmon_utils::urlModified(char *url, char *lastModified) throw(runtime_error
 
 }  
 
-int apmon_utils::httpRequest(char *url, const char *reqType, char *temp_filename) 
-throw(runtime_error) {
+int apmon_utils::httpRequest(char *url, const char *reqType, char *temp_filename) {
   // the server from which we get the configuration file
   char hostname[MAX_STRING_LEN]; 
   // the name of the remote file
   char filename[MAX_STRING_LEN];
   // the port on which the server listens (by default 80)
   int port;
-  char msg[MAX_STRING_LEN];
+  char msg[MAX_STRING_LEN*3];
   
   int sd, rc;
   struct sockaddr_in localAddr, servAddr;
@@ -129,7 +128,7 @@ throw(runtime_error) {
 
   parse_URL(url, hostname, &port, filename);
 
-  snprintf(msg, MAX_STRING_LEN-1, "Sending HTTP %s request to: \n Hostname: %s , Port: %d , Filename: %s", reqType, hostname, port, filename);
+  snprintf(msg, MAX_STRING_LEN*3-1, "Sending HTTP %s request to: \n Hostname: %s , Port: %d , Filename: %s", reqType, hostname, port, filename);
   logger(INFO, msg);
   
   request = (char *)malloc(MAX_STRING_LEN * sizeof(char));
@@ -144,8 +143,8 @@ throw(runtime_error) {
   h = gethostbyname(hostname);
   if(h==NULL) {
     free(request);
-    snprintf(msg, MAX_STRING_LEN-1, "[ httpRequest() ] Unknown host: %s ", hostname);
-    throw runtime_error(msg);
+    snprintf(msg, MAX_STRING_LEN*3-1, "[ httpRequest() ] Unknown host: %s ", hostname);
+    return -1;
   }
 
   servAddr.sin_family = h->h_addrtype;
@@ -155,7 +154,7 @@ throw(runtime_error) {
   sd = socket(AF_INET, SOCK_STREAM, 0);
   if(sd<0) {
     free(request);
-    throw runtime_error(" [ httpRequest() ] Cannot open socket ");
+    return -1;
   }
 
   /* set connection timeout */
@@ -190,7 +189,7 @@ throw(runtime_error) {
 #else
 	closesocket(sd);
 #endif
-    throw runtime_error("[ httpRequest() ] Cannot connect to http server");
+    return -1;
   }
 
   // send the request
@@ -202,7 +201,7 @@ throw(runtime_error) {
 	closesocket(sd);
 #endif
     free(request);
-    throw runtime_error("[ httpRequest() ] Cannot send the request to the http server");
+    return -1;
   }
  
   free(request);
@@ -215,7 +214,7 @@ throw(runtime_error) {
 #else
 	closesocket(sd);
 #endif
-    throw runtime_error("[ httpRequest() ] Unable to open for writing temporary file");
+    return -1;
   }
 
   rc = 0, totalSize = 0;
@@ -230,7 +229,7 @@ throw(runtime_error) {
     }
   }while(rc>0);
 
-  snprintf(msg, MAX_STRING_LEN-1, "Received response from  %s, response size is %d bytes",  hostname, totalSize);
+  snprintf(msg, MAX_STRING_LEN*3-1, "Received response from  %s, response size is %d bytes",  hostname, totalSize);
   logger(INFO, msg);
 
 #ifndef WIN32
@@ -242,7 +241,7 @@ throw(runtime_error) {
   return totalSize;
 }
 
-char *apmon_utils::findIP(char *address) throw(runtime_error) {
+char *apmon_utils::findIP(char *address) {
   int isIP = 1;
   char *destIP, *s;
   struct in_addr addr;
@@ -261,7 +260,7 @@ char *apmon_utils::findIP(char *address) throw(runtime_error) {
       if (he == NULL) {
 	char tmp_msg[128];
 	snprintf(tmp_msg, 127, "[ findIP() ] Invalid destination address %s", address);
-	throw runtime_error(tmp_msg);
+        return 0;
       }
       j = 0;
       /* get from the list the first IP address 
@@ -289,27 +288,25 @@ char *apmon_utils::findIP(char *address) throw(runtime_error) {
 }
 
 
-void apmon_utils::parse_URL(char *url, char *hostname, int *port, char *identifier) 
-throw(runtime_error) {
+void apmon_utils::parse_URL(char *url, char *hostname, int *port, char *identifier) {
     char protocol[MAX_STRING_LEN], scratch[MAX_STRING_LEN], *ptr=0, *nptr=0;
     char msg[MAX_STRING_LEN];
 
     strncpy(scratch, url, MAX_STRING_LEN-1);
     ptr = (char *)strchr(scratch, ':');
     if (!ptr)
-	throw runtime_error("[ parse_URL() ] Wrong url: no protocol specified");
+      return;
 
     strcpy(ptr, "\0");
     strncpy(protocol, scratch, MAX_STRING_LEN-1);
     if (strcmp(protocol, "http")) {
-		snprintf(msg, MAX_STRING_LEN-1, "[ parse_URL() ] Wrong protocol in URL: %s", protocol);
-		throw runtime_error(msg);
+	return;
     }
 
     strncpy(scratch, url, MAX_STRING_LEN-1);
     ptr = (char *)strstr(scratch, "//");
     if (!ptr) {
-		throw runtime_error("[ parse_URL() ] Wrong url: no server specified");
+	return;
     }
     ptr += 2;
 
@@ -328,7 +325,7 @@ throw(runtime_error) {
 
     nptr = (char *)strchr(ptr, '/');
     if (!nptr) {
-		throw runtime_error("[ parse_URL() ] Wrong url: no file specified");
+	return;
     }
     
     strncpy(identifier, nptr, MAX_STRING_LEN-1);

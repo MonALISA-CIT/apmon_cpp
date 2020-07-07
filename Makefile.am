@@ -7,7 +7,7 @@ endif
 AM_CXXFLAGS = 
 INCLUDES = -I./ 
 lib_LTLIBRARIES = libapmoncpp.la
-include_HEADERS = ApMon.h utils.h monitor_utils.h proc_utils.h mon_constants.h xdr.h
+include_HEADERS = ApMon.h utils.h monitor_utils.h proc_utils.h mon_constants.h xdr.h types.h
 
 libapmoncpp_la_SOURCES = ApMon.cpp utils.cpp monitor_utils.cpp proc_utils.cpp mon_constants.cpp xdr.cpp
 

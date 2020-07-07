@@ -14,10 +14,10 @@
  * purpose, provided that existing copyright notices are retained in 
  * all copies and that this notice is included verbatim in any distributions
  * or substantial portions of the Software. 
- * This software is a part of the MonALISA framework (http://monalisa.caltech.edu).
+ * This software is a part of the MonALISA framework (http://monalisa.cacr.caltech.edu).
  * Users of the Software are asked to feed back problems, benefits,
  * and/or suggestions about the software to the MonALISA Development Team
- * (MonALISA-CIT@cern.ch). Support for this software - fixing of bugs,
+ * (developers@monalisa.cern.ch). Support for this software - fixing of bugs,
  * incorporation of new features - is done on a best effort basis. All bug
  * fixes and enhancements will be made available under the same terms and
  * conditions as the original software,

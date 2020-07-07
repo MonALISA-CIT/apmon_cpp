@@ -14,10 +14,10 @@
  * purpose, provided that existing copyright notices are retained in 
  * all copies and that this notice is included verbatim in any distributions
  * or substantial portions of the Software. 
- * This software is a part of the MonALISA framework (http://monalisa.caltech.edu).
+ * This software is a part of the MonALISA framework (http://monalisa.cacr.caltech.edu).
  * Users of the Software are asked to feed back problems, benefits,
  * and/or suggestions about the software to the MonALISA Development Team
- * (MonALISA-CIT@cern.ch). Support for this software - fixing of bugs,
+ * (developers@monalisa.cern.ch). Support for this software - fixing of bugs,
  * incorporation of new features - is done on a best effort basis. All bug
  * fixes and enhancements will be made available under the same terms and
  * conditions as the original software,
@@ -71,12 +71,12 @@ namespace apmon_mon_utils {
   } JobDirInfo;
 
   /** Determines all the descendants of a given process. */
-  long *getChildren(long pid, int& nChildren) throw(runtime_error);
+  long *getChildren(long pid, int& nChildren);
   
   /** Obtains monitoring information for a given job and all its sub-jobs 
    * (descendant processes) with the aid of the ps command. 
    */
-  void readJobInfo(long pid, PsInfo& info) throw(runtime_error);
+  void readJobInfo(long pid, PsInfo& info);
 
   /**
    * Function that parses a time formatted like "days-hours:min:sec" and 
@@ -89,8 +89,7 @@ namespace apmon_mon_utils {
    * that directory and the free disk space on the partition to which that 
    * directory belongs. Sizes are given in MB.
    */
-  void readJobDiskUsage(MonitoredJob job, JobDirInfo& info) 
-    throw(runtime_error); 
+  void readJobDiskUsage(MonitoredJob job, JobDirInfo& info);
 };
 
 #endif

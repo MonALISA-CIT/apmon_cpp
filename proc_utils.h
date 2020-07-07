@@ -14,10 +14,10 @@
  * purpose, provided that existing copyright notices are retained in 
  * all copies and that this notice is included verbatim in any distributions
  * or substantial portions of the Software. 
- * This software is a part of the MonALISA framework (http://monalisa.caltech.edu).
+ * This software is a part of the MonALISA framework (http://monalisa.cacr.caltech.edu).
  * Users of the Software are asked to feed back problems, benefits,
  * and/or suggestions about the software to the MonALISA Development Team
- * (MonALISA-CIT@cern.ch). Support for this software - fixing of bugs,
+ * (developers@monalisa.cern.ch). Support for this software - fixing of bugs,
  * incorporation of new features - is done on a best effort basis. All bug
  * fixes and enhancements will be made available under the same terms and
  * conditions as the original software,
@@ -70,16 +70,14 @@ class ProcUtils {
 			       double& cpuIOWait, double& cpuIRQ,
 			       double& cpuSoftIRQ, double& cpuSteal,
 			       double& cpuGuest,
-			       int numCPUs)
-  throw (runtime_error, procutils_error);
+			       int numCPUs);
 
    /** Calculates the parameters pages_in, pages_out, swap_in, swap_out,
       cpu_usage and stores them in the output parameters pagesIn, pagesOut,...
    */
   static void getSwapPages(ApMon& apm, double& pagesIn, 
 			       double& pagesOut, double& swapIn, 
-			     double& swapOut) 
-    throw (runtime_error, procutils_error);
+			     double& swapOut);
 
   /**
    * Obtains the CPU load in the last 1, 5 and 15 mins and the number of 
@@ -87,7 +85,7 @@ class ProcUtils {
    * as parameters.
    */
   static void getLoad(double& load1, double& load5, double& load15, 
-	       double& processes) throw(procutils_error);
+	       double& processes);
 
   /**
    * Obtains statistics about the total number of processes and
@@ -101,23 +99,20 @@ class ProcUtils {
    *   X dead
    *   Z a defunct ("zombie") process
    */
-  static void getProcesses(double& processes, double states[]) 
-    throw(runtime_error); 
+  static void getProcesses(double& processes, double states[]);
 
   /**
    * Obtains the total amount of memory and the total amount of swap (in KB)
    * and stores them in the variables given as parameters.
    */
-  static void getSysMem(double& totalMem, double& totalSwap) 
-    throw(procutils_error);
+  static void getSysMem(double& totalMem, double& totalSwap);
 
   /**
    * Obtains the amount of memory and of swap currently in use and stores
    * them in the variables given as parameters.
    */
   static void getMemUsed(double& usedMem, double&freeMem, double &usedSwap,
-		  double& freeSwap) 
-    throw(procutils_error);
+		  double& freeSwap);
 
   /**
    * Obtains the names of the network interfaces (excepting the loopback one).
@@ -126,8 +121,7 @@ class ProcUtils {
    * @param names Output parameter which will store the names of the
    * interfaces.
    */
-  static void getNetworkInterfaces(int &nInterfaces, char names[][20]) 
-    throw(procutils_error);
+  static void getNetworkInterfaces(int &nInterfaces, char names[][20]);
 
   /**
    * Computes the input/output traffic for all the network interfaces,
@@ -142,8 +136,7 @@ class ProcUtils {
    * interface. 
    */  
   static void getNetInfo(ApMon& apm, double **vNetIn, double **vNetOut, 
-		  double **vNetErrs) 
-    throw(runtime_error, procutils_error);
+		  double **vNetErrs);
 
   /**
    * Obtains information about the currently opened sockets.
@@ -153,35 +146,35 @@ class ProcUtils {
    * of TCP sockets in each possible state (ESTABLISHED, LISTEN, ...).
    */
   static void getNetstatInfo(ApMon& apm, double nsockets[], double 
-			     tcp_states[]) throw(runtime_error);
+			     tcp_states[]);
 
   /**
    * Returns the number of CPUs in the system.
    */
-  static int getNumCPUs() throw(procutils_error);
+  static int getNumCPUs();
 
   /**
    * Obtains CPU information (vendor, model, frequency, bogomips) and fills the
    * corresponding fields in the ApMon object.
    */
-  static void getCPUInfo(ApMon& apm) throw(procutils_error);
+  static void getCPUInfo(ApMon& apm);
 
   /**
    * Returns the system boot time, in seconds since the Epoch.
    */
-  static long getBootTime() throw (procutils_error);
+  static long getBootTime();
 
   /**
    * Returns the system uptime in days.
    */
-  static double getUpTime() throw(procutils_error);
+  static double getUpTime();
 
 
   /**
    * Obtains the number of opened file descriptors for the process with
    * the given pid.
    */
-  static int countOpenFiles(long pid) throw(procutils_error);
+  static int countOpenFiles(long pid);
 };
 
 #endif

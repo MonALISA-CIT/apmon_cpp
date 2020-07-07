@@ -17,7 +17,7 @@
 1. Introduction
 ****************
   ApMon is an API that can be used by any application to send monitoring
-information to MonALISA services (http://monalisa.caltech.edu). The
+information to MonALISA services (http://monalisa.cacr.caltech.edu). The
 monitoring data is sent as UDP datagrams to one or more hosts running MonALISA.
 The MonALISA host may require a password enclosed in each datagram, for 
 authentication purposes. ApMon can also send datagrams that contain monitoring
@@ -334,4 +334,4 @@ e.g.:
 7. Bug reports
 ***************
   For bug reports, comments and suggestions please write to
-  MonALISA-CIT@cern.ch
+  developers@monalisa.cern.ch

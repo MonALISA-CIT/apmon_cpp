@@ -14,10 +14,10 @@
  * purpose, provided that existing copyright notices are retained in 
  * all copies and that this notice is included verbatim in any distributions
  * or substantial portions of the Software. 
- * This software is a part of the MonALISA framework (http://monalisa.caltech.edu).
+ * This software is a part of the MonALISA framework (http://monalisa.cacr.caltech.edu).
  * Users of the Software are asked to feed back problems, benefits,
  * and/or suggestions about the software to the MonALISA Development Team
- * (MonALISA-CIT@cern.ch). Support for this software - fixing of bugs,
+ * (developers@monalisa.cern.ch). Support for this software - fixing of bugs,
  * incorporation of new features - is done on a best effort basis. All bug
  * fixes and enhancements will be made available under the same terms and
  * conditions as the original software,
@@ -890,8 +890,7 @@ void ApMon::parseXApMonLine(char *line) {
   pthread_mutex_unlock(&mutexBack);
 }
   
-long *apmon_mon_utils::getChildren(long pid, int& nChildren) 
-  throw(runtime_error) {
+long *apmon_mon_utils::getChildren(long pid, int& nChildren){
 #ifdef WIN32
 	return 0;
 #else
@@ -912,7 +911,7 @@ long *apmon_mon_utils::getChildren(long pid, int& nChildren)
 
   switch (cpid = fork()) {
   case -1:
-    throw runtime_error("[ getChildren() ] Unable to fork()");
+    return 0;
   case 0:
     argv[0] = (char *)"/bin/sh"; argv[1] = (char *)"-c";
     snprintf(cmd, 199, "ps --no-headers -A -o ppid,pid > %s && wc -l %s > %s", children_f, children_f, np_f);
@@ -927,7 +926,7 @@ long *apmon_mon_utils::getChildren(long pid, int& nChildren)
     if (waitpid(cpid, &status, 0) == -1) {
       snprintf(msg, MAX_STRING_LEN-1, "[ getChildren() ] The number of sub-processes for %ld could not be determined", pid);
       unlink(children_f); unlink(np_f);
-      throw runtime_error(msg); 
+      return 0;
     }
   }
 
@@ -937,7 +936,7 @@ long *apmon_mon_utils::getChildren(long pid, int& nChildren)
     unlink(np_f); unlink(children_f);
     snprintf(msg, MAX_STRING_LEN-1, "[ getChildren() ] The number of sub-processes for %ld could not be determined",
 	    pid);
-    throw runtime_error(msg);
+    return 0;
   } 
   int retScan = fscanf(pf, "%d", &nProcesses);
   if (retScan < 1)
@@ -956,7 +955,7 @@ long *apmon_mon_utils::getChildren(long pid, int& nChildren)
     free(pids); free(ppids); free(children);
     unlink(children_f);
     snprintf(msg, MAX_STRING_LEN-1, "[ getChildren() ] The sub-processes for %ld could not be determined", pid);
-    throw runtime_error(msg);
+    return 0;
   } 
  
   /* scan the output of the ps command and find the children of the process,
@@ -981,7 +980,7 @@ long *apmon_mon_utils::getChildren(long pid, int& nChildren)
     free(pids); free(ppids); free(children);
     nChildren = 0;
     snprintf(msg, MAX_STRING_LEN-1, "[ getChildren() ] The process %ld does not exist", pid);
-    throw runtime_error(msg);
+    return 0;
   } 
 
   /* find the PIDs of all the descendant processes */
@@ -1010,7 +1009,7 @@ long *apmon_mon_utils::getChildren(long pid, int& nChildren)
 #endif
 }
 
-void apmon_mon_utils::readJobInfo(long pid, PsInfo& info) throw(runtime_error) {
+void apmon_mon_utils::readJobInfo(long pid, PsInfo& info){
 #ifndef WIN32
   long *children;
   FILE *fp;
@@ -1053,7 +1052,7 @@ void apmon_mon_utils::readJobInfo(long pid, PsInfo& info) throw(runtime_error) {
     if (strlen(cmd) + strlen(pid_s) + 1 >= cmdLen) {
       free(cmd);
       snprintf(msg, 99, "[ readJobInfo() ] Job %ld has too many sub-processes to be monitored", pid);
-      throw runtime_error(msg);
+      return;
     }
     strcat(cmd, pid_s);
     //strcat(cmd, " 2>&1");
@@ -1065,7 +1064,7 @@ void apmon_mon_utils::readJobInfo(long pid, PsInfo& info) throw(runtime_error) {
   if (strlen(cmd) + strlen(pid_s) + strlen(cmdName) >= cmdLen) {
     free(cmd);
     snprintf(msg, 99, "[ readJobInfo() ] Job %ld has too many sub-processes to be monitored", pid);
-    throw runtime_error(msg);
+    return;;
   }
   strncat(cmd, pid_s, cmdLen - strlen(cmd) - 1);
   strncat(cmd, cmdName, cmdLen - strlen(cmd) - 1);
@@ -1075,7 +1074,7 @@ void apmon_mon_utils::readJobInfo(long pid, PsInfo& info) throw(runtime_error) {
   case -1:
     free(cmd);
     snprintf(msg, 99, "[ readJobInfo() ] Unable to fork(). The job information could not be determined for %ld", pid);
-    throw runtime_error(msg);
+    return;
   case 0:
     argv[0] = (char *)"/bin/sh"; argv[1] = (char *)"-c";
     argv[2] = cmd; argv[3] = 0;
@@ -1085,7 +1084,7 @@ void apmon_mon_utils::readJobInfo(long pid, PsInfo& info) throw(runtime_error) {
     if (waitpid(cpid, &status, 0) == -1) {
       free(cmd);
       snprintf(msg, 99, "[ readJobInfo() ] The job information for %ld could not be determined", pid);
-      throw runtime_error(msg); 
+      return;
     }
   }
 
@@ -1093,7 +1092,7 @@ void apmon_mon_utils::readJobInfo(long pid, PsInfo& info) throw(runtime_error) {
   fp = fopen(ps_f, "rt");
   if (fp == NULL) {
     snprintf(msg, 99, "[ readJobInfo() ] Error opening the ps output file for process %ld", pid);
-    throw runtime_error(msg);
+    return;
   }
 
   /* parse the output file */
@@ -1132,7 +1131,7 @@ void apmon_mon_utils::readJobInfo(long pid, PsInfo& info) throw(runtime_error) {
 	free(mem_cmd_list[i]);
       }
       free(mem_cmd_list);
-      throw runtime_error("[ readJobInfo() ] Error parsing the output of the ps command");
+      return;
     }
 
     /* etime is the maximum of the elapsed times for the subprocesses */
@@ -1154,8 +1153,8 @@ void apmon_mon_utils::readJobInfo(long pid, PsInfo& info) throw(runtime_error) {
     }
 
     /* see if this is a process or just a thread */
-    mem_cmd_s = (char *)malloc(MAX_STRING_LEN * sizeof(char));
-    snprintf(mem_cmd_s, MAX_STRING_LEN-1, "%lf_%lf_%s", rsz, vsz, cmdName);
+    mem_cmd_s = (char *)malloc(MAX_STRING_LEN * 2 * sizeof(char));
+    snprintf(mem_cmd_s, MAX_STRING_LEN*2-1, "%lf_%lf_%s", rsz, vsz, cmdName);
     //printf("### mem_cmd_s: %s\n", mem_cmd_s);
     if (getVectIndex(mem_cmd_s, mem_cmd_list, listSize) == -1) {
       /* aonther pid with the same command name, rsz and vsz was not found,
@@ -1212,8 +1211,7 @@ long apmon_mon_utils::parsePSTime(char *s) {
   }
 }
 
-void apmon_mon_utils::readJobDiskUsage(MonitoredJob job, 
-				JobDirInfo& info) throw(runtime_error) {
+void apmon_mon_utils::readJobDiskUsage(MonitoredJob job, JobDirInfo& info){
 #ifndef WIN32
   int status;
   pid_t cpid;
@@ -1229,14 +1227,14 @@ void apmon_mon_utils::readJobDiskUsage(MonitoredJob job,
   
   if (strlen(job.workdir) == 0) {
     snprintf(msg, 199, "[ readJobDiskUsage() ] The working directory for the job %ld was not specified, not monitoring disk usage", job.pid);
-    throw runtime_error(msg);
+    return;
   }
   
   unsigned int cmdLen = 300 + 2 * strlen(job.workdir);
   
   cmd = (char *)malloc(cmdLen * sizeof(char));
   strcpy(cmd, "PRT=`du -Lsk ");
-  strncat(cmd, job.workdir, cmdLen - strlen(cmd) - 1);
+  strncat(cmd, job.workdir, cmdLen - 20);
   //strcat(cmd, " | tail -1 | cut -f 1 > ");
   strncat(cmd, " ` ; if [[ $? -eq 0 ]] ; then OUT=`echo $PRT | cut -f 1` ; echo $OUT ; exit 0 ; else exit -1 ; fi > ", cmdLen - strlen(cmd) - 1); 
   strncat(cmd, du_f, cmdLen - strlen(cmd) - 1);
@@ -1244,7 +1242,7 @@ void apmon_mon_utils::readJobDiskUsage(MonitoredJob job,
   switch (cpid = fork()) {
   case -1:
     snprintf(msg, 199, "[ readJobDiskUsage() ] Unable to fork(). The disk usage information could not be determined for %ld", job.pid);
-    throw runtime_error(msg);
+    return;
   case 0:
     argv[0] = (char *)"/bin/sh"; argv[1] = (char *)"-c";
     argv[2] = cmd; argv[3] = 0;
@@ -1255,7 +1253,7 @@ void apmon_mon_utils::readJobDiskUsage(MonitoredJob job,
       free(cmd);
       snprintf(msg, 199, "[ readJobDiskUsage() ] The disk usage (du) information for %ld could not be determined", job.pid);
       unlink(du_f); unlink(df_f);
-      throw runtime_error(msg); 
+      return;
     }
   }
 
@@ -1270,7 +1268,7 @@ void apmon_mon_utils::readJobDiskUsage(MonitoredJob job,
   switch (cpid = fork()) {
   case -1:
     snprintf(msg, 199, "[ readJobDiskUsage() ] Unable to fork(). The disk usage information could not be determined for %ld", job.pid);
-    throw runtime_error(msg);
+    return;
   case 0:
     argv[0] = (char *)"/bin/sh"; argv[1] = (char *)"-c";
     argv[2] = cmd; argv[3] = 0;
@@ -1281,7 +1279,7 @@ void apmon_mon_utils::readJobDiskUsage(MonitoredJob job,
       free(cmd);
       snprintf(msg, 199, "[ readJobDiskUsage() ] The disk usage (df) information for %ld could not be determined", job.pid);
       unlink(du_f); unlink(df_f);
-      throw runtime_error(msg); 
+      return;
     }
   }
 
@@ -1289,14 +1287,14 @@ void apmon_mon_utils::readJobDiskUsage(MonitoredJob job,
   fp = fopen(du_f, "rt");
   if (fp == NULL) {
     snprintf(msg, 199, "[ readJobDiskUsage() ] Error opening du output file for process %ld", job.pid);
-    throw runtime_error(msg);
+    return;
   }
 
   int retScan = fscanf(fp, "%lf", &(info.workdir_size));
   if (retScan != 1) {
     fclose(fp); unlink(du_f);
     snprintf(msg, 199, "[ readJobDiskUsage() ] Error reading du output file for process %ld", job.pid);
-    throw runtime_error(msg);
+    return;
   }
   /* keep the directory size in MB */
   info.workdir_size /= 1024.0;
@@ -1306,14 +1304,14 @@ void apmon_mon_utils::readJobDiskUsage(MonitoredJob job,
   fp = fopen(df_f, "rt");
   if (fp == NULL) {
     snprintf(msg, 199, "[ readJobDiskUsage() ] Error opening df output file for process %ld", job.pid);
-    throw runtime_error(msg);
+    return;
   }
   retScan = fscanf(fp, "%s %lf %lf %lf %lf", s_tmp, &(info.disk_total), 
 	 &(info.disk_used), &(info.disk_free), &(info.disk_usage));
   if (retScan != 5) {	 
     fclose(fp); unlink(du_f);
     snprintf(msg, 199, "[ readJobDiskUsage() ] Error reading df output file for process %ld", job.pid);
-    throw runtime_error(msg);
+    return;
   }
 	 
   fclose(fp);
