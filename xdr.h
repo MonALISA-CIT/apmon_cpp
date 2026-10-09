@@ -152,6 +152,7 @@ enum xdr_op {
  */
 
 #ifdef __cplusplus
+#include <cstdint>
 
 typedef struct {
         enum xdr_op     x_op;           /* operation; fast additional param */
